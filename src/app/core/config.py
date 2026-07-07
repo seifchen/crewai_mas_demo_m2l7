@@ -61,6 +61,20 @@ class Settings(BaseSettings):
     xhs_image_quality: int = 85
     # 单次请求允许上传的最大图片数量，默认 20，可通过 APP_XHS_MAX_IMAGES 覆盖
     xhs_max_images: int = 20
+
+    # 公众号改写：单次请求允许提交的最大原文篇数，默认 10
+    mp_max_articles: int = 10
+    # 公众号改写：单篇原文允许的最大字符数，默认 20000
+    mp_max_article_chars: int = 20000
+    # 公众号改写：允许通过 content_path 读取本地文件的根目录白名单，
+    # 空字符串表示不限制（仅开发环境建议）；生产环境请设置为专门存放原文素材的目录，
+    # 防止目录穿越攻击。
+    mp_article_read_root: str = ""
+    # 公众号改写：允许读取的本地原文文件后缀（小写、以点开头，逗号分隔）
+    mp_article_allowed_suffixes: str = ".txt,.md,.markdown,.text"
+    # 公众号改写：单个本地原文文件最大字节数，默认 2 MB
+    mp_article_max_file_bytes: int = 2 * 1024 * 1024
+
     # CrewAI 执行超时时间（秒），默认 10 分钟
     crew_execution_timeout: int = 600
 
@@ -107,6 +121,19 @@ class Settings(BaseSettings):
         if not self.api_keys or not self.api_keys.strip():
             return set()
         return {k.strip() for k in self.api_keys.split(",") if k.strip()}
+
+    def get_mp_article_allowed_suffixes(self) -> set[str]:
+        """返回公众号改写允许读取的本地原文文件后缀集合（小写、以点开头）。"""
+        raw = self.mp_article_allowed_suffixes or ""
+        result: set[str] = set()
+        for item in raw.split(","):
+            s = item.strip().lower()
+            if not s:
+                continue
+            if not s.startswith("."):
+                s = "." + s
+            result.add(s)
+        return result
 
     @property
     def is_production(self) -> bool:

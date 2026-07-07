@@ -53,3 +53,5 @@ temp/
 
 # 设计文档可保留在 doc/，本地草稿可忽略
 # doc/design/draft*
+.history
+article.txt

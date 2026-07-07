@@ -2,8 +2,9 @@
 
 from app.core.config import get_settings
 from app.crews.llm.aliyun_llm import AliyunLLM
+from app.crews.llm.hunyuan_llm import HunyuanLLM 
 
-__all__ = ["AliyunLLM", "get_llm"]
+__all__ = ["AliyunLLM", "get_llm", "HunyuanLLM"]
 
 
 def get_llm(
@@ -35,5 +36,15 @@ def get_llm(
             timeout=kwargs.get("timeout"),
             retry_count=kwargs.get("retry_count"),
             image_model=image_model or settings.llm_image_model,
+        )
+    if provider == "hunyuan":
+        return HunyuanLLM(
+            model=model or settings.llm_model,
+            api_key=kwargs.get("api_key"),
+            endpoint=kwargs.get("endpoint"),
+            reasoning_effort=kwargs.get("reasoning_effort"),
+            max_completion_tokens=kwargs.get("max_completion_tokens"),
+            timeout=kwargs.get("timeout"),
+            retry_count=kwargs.get("retry_count"),
         )
     raise ValueError(f"不支持的 LLM provider: {provider}，当前支持: aliyun")

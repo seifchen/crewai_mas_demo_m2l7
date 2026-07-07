@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, Tuple
+from typing import Any, ClassVar, Tuple
 
 import requests
 from crewai import BaseLLM
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 class AliyunLLM(BaseLLM):
     """阿里云通义千问 LLM，兼容 CrewAI BaseLLM 接口，支持多模态消息。"""
 
-    ENDPOINTS = {
+    ENDPOINTS: ClassVar[dict[str, str]] = {
         "cn": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
         "intl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
         "finance": "https://dashscope-finance.aliyuncs.com/compatible-mode/v1/chat/completions",

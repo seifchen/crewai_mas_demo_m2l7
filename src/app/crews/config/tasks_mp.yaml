@@ -1,0 +1,109 @@
+# ============================================================================
+# 公众号文章改写项目 Task（task_mp_ 前缀）
+# ============================================================================
+
+task_mp_article_analysis:
+  agent: mp_content_analyst
+  context: []
+  description: |
+    你需要根据用户的改写诉求，对一篇公众号原文进行深入的内容分析：
+    1）用户的原始改写诉求 rewrite_intent（字符串）：
+       {rewrite_intent}
+    2）原文信息 article_info（是一个字典，包含 article_id、title、content），
+       JSON 形式展示如下（请仔细阅读并据此分析）：
+       {article_info}
+    请对原文进行整体与细节的多维度拆解，并按照 MpArticleAnalysis 的字段要求，
+    输出结构化的内容分析结果（核心主题、关键信息点、结构脉络、语气风格、目标读者、亮点与可复用素材）。
+    注意，只陈述原文写了什么、怎么写的，不要给出改写主张，也不要编造原文没有的信息。
+
+    **强调输出格式：**
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+    - 对于没有内容的字段，可以用合理的中文描述（如 "暂无"），不要用形如 `"" ""` 的错误写法
+    - 尽量对每个字段给出充实、有信息量的中文描述
+  expected_output: |
+    一个能够被解析为 MpArticleAnalysis 的结构化输出。
+    特别重要（避免解析失败）：
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+
+task_mp_article_analysis_summary:
+  agent: mp_content_analyst
+  description: |
+    你将获得所有原文的内容分析结果，你需要总结所有原文的内容分析结果，
+    并生成一句话的整体内容分析总结，不要超过 50 个字。
+  expected_output: |
+    不输出多余内容，只输出一个一句话的整体内容分析总结。
+
+task_mp_rewrite_strategy:
+  agent: mp_strategy_expert
+  context: []
+  description: |
+    你将基于用户改写诉求与多篇原文的内容分析报告，输出一份可直接指导改写的策略简报。
+
+    1）用户的原始改写诉求 rewrite_intent（字符串）：
+       {rewrite_intent}
+
+    2）期望的目标文风 target_style（字符串，可能为空）：
+       {target_style}
+
+    3）多篇原文的内容分析报告 analysis_report（JSON格式）：
+       {analysis_report}
+
+    请仔细阅读上述信息，基于用户诉求与原文分析结果，制定符合公众号传播逻辑的改写策略简报。
+    特别重要：
+    - 必须严格基于用户提供的改写诉求和原文分析结果，不得自行编造或使用示例数据。
+    - 所有策略建议必须与用户诉求和原文内容高度相关。
+    - 明确切入角度、目标读者、核心价值、标题方向、结构大纲、开头钩子与相较原文的差异化升级点。
+    - 使用 IntermediateTool 工具保存中间思考过程。
+
+    **强调输出格式：**
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+  expected_output: |
+    一个完整的 MpRewriteStrategyBrief 结构化输出。
+    特别重要（避免解析失败）：
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+
+task_mp_rewrite:
+  agent: mp_rewriter
+  context:
+  - task_mp_rewrite_strategy
+  description: |
+    你将基于改写策略简报与原文内容分析，把原文改写成一篇全新的、读者愿意读完与转发的公众号文章。
+
+    1）用户的原始改写诉求 rewrite_intent（字符串）：
+       {rewrite_intent}
+
+    2）期望的目标文风 target_style（字符串，可能为空）：
+       {target_style}
+
+    3）多篇原文的内容分析报告 analysis_report（JSON格式）：
+       {analysis_report}
+
+    请严格保留原文的关键事实、数据与观点本意，只重塑表达、结构与叙事，不要洗稿式替换词句，也不要编造信息。
+    输出改写后的标题、完整正文（保留分段）、摘要 / 导语，以及文中关键段落 / 金句列表。
+    使用 IntermediateTool 工具保存中间思考过程。
+
+    **强调输出格式：**
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+  expected_output: |
+    一个完整的 MpRewrittenArticle 结构化输出，包含标题、正文、摘要与关键段落。
+    特别重要（避免解析失败）：
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+
+task_mp_optimization:
+  agent: mp_optimizer
+  context:
+  - task_mp_rewrite_strategy
+  - task_mp_rewrite
+  description: |
+    你将基于改写策略简报与改写后的文章，对标题、正文排版、关键词与合规进行优化，
+    在不损害阅读体验与事实准确性的前提下，最大化打开率、完读率与传播效率。
+    请给出优化说明、优化后的主标题、3-5 个 A/B 备选标题、含排版建议标记的优化正文、
+    排版建议列表、关键词 / 话题标签，以及合规与风险提示。
+    使用 IntermediateTool 工具保存中间思考过程。
+
+    **强调输出格式：**
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+  expected_output: |
+    一个完整的 MpFinalOptimizedArticle 结构化输出。
+    特别重要（避免解析失败）：
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
