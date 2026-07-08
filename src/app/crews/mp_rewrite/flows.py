@@ -173,6 +173,10 @@ async def _run_rewrite_phase(
                 inputs={
                     "rewrite_intent": request.rewrite_intent,
                     "target_style": request.target_style or "（未指定，可自由发挥）",
+                    "word_count_requirement": (
+                        request.word_count_requirement
+                        or "（未指定，由改写编辑按题材自行判断合适篇幅）"
+                    ),
                     "analysis_report": analysis_batch.model_dump_json(indent=2),
                 }
             ),

@@ -58,6 +58,13 @@ class MpRewriteRequest(BaseModel):
     target_style: str = Field(
         "", description="期望的目标文风（可选），如“轻松活泼”“专业干货”“故事化叙述”等。"
     )
+    word_count_requirement: str = Field(
+        "1500-2000字",
+        description=(
+            "文章字数要求（可选，自然语言描述），如“控制在 1500–2000 字”“不少于 3000 字”"
+            "“800 字左右”等；为空时由改写编辑按题材自行判断合适篇幅。"
+        ),
+    )
     source_articles: List[MpArticleInput] = Field(
         ..., description="本次参与分析与改写的原文列表（支持多篇素材聚合改写）。"
     )

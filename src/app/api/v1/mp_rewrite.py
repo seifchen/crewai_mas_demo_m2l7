@@ -44,6 +44,7 @@ async def create_mp_rewrite_report(
             rewrite_intent=payload.rewrite_intent,
             source_articles=payload.source_articles,
             target_style=payload.target_style,
+            word_count_requirement=payload.word_count_requirement,
         )
     except Exception as exc:  # noqa: BLE001
         logger.exception("mp_rewrite_api_failed", error=str(exc), request_id=request_id)

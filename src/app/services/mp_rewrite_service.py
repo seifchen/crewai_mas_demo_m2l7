@@ -147,6 +147,7 @@ async def generate_mp_rewrite_report(
     rewrite_intent: str,
     source_articles: List[MpArticleInput],
     target_style: str = "",
+    word_count_requirement: str = "",
 ) -> Tuple[Optional[str], str]:
     """对外主入口：执行公众号文章改写流程。
 
@@ -203,6 +204,7 @@ async def generate_mp_rewrite_report(
         request = MpRewriteRequest(
             rewrite_intent=rewrite_intent.strip(),
             target_style=(target_style or "").strip(),
+            word_count_requirement=(word_count_requirement or "").strip(),
             source_articles=articles,
         )
 
