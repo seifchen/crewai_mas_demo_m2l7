@@ -6,11 +6,14 @@ import json
 from typing import Any
 
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.observability.logging import get_logger
 
 logger = get_logger(__name__)
+
+# 规范字段名
+_CANONICAL_FIELD = "intermediate_product"
 
 
 class IntermediateToolSchema(BaseModel):
@@ -24,6 +27,44 @@ class IntermediateToolSchema(BaseModel):
             "例如：列表 ['a', 'b'] 会转为 'a\\nb'，字典会转为 JSON 字符串。"
         ),
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_field_name(cls, data: Any) -> Any:
+        """容错处理：LLM 调用时常把参数名写成 `intermediate_product_to_save`、
+        `product`、`content` 等变体，导致规范字段 `intermediate_product` 缺失而校验失败。
+
+        本校验器在正式校验前把这些"跑偏"的键归一化到 `intermediate_product`，
+        避免因参数名不精确导致的 Tool 调用失败。
+        """
+        if not isinstance(data, dict):
+            return data
+
+        # 已包含规范字段（且非 None）则无需处理
+        if data.get(_CANONICAL_FIELD) is not None:
+            return data
+
+        # 1) 优先匹配包含 "intermediate_product" 的变体键（如 *_to_save）
+        for key in list(data.keys()):
+            if _CANONICAL_FIELD in str(key).lower():
+                data[_CANONICAL_FIELD] = data[key]
+                return data
+
+        # 2) 其次匹配常见近义键
+        for candidate in ("product", "content", "text", "value", "result", "data"):
+            if candidate in data and data[candidate] is not None:
+                data[_CANONICAL_FIELD] = data[candidate]
+                return data
+
+        # 3) 兜底：只有一个键时，直接把它的值当作中间产物
+        non_canonical = {k: v for k, v in data.items() if k != _CANONICAL_FIELD}
+        if len(non_canonical) == 1:
+            data[_CANONICAL_FIELD] = next(iter(non_canonical.values()))
+        elif non_canonical:
+            # 多个未知键时，整体作为字典传入（下游会转成 JSON 字符串）
+            data[_CANONICAL_FIELD] = dict(non_canonical)
+
+        return data
 
     @field_validator("intermediate_product", mode="before")
     @classmethod

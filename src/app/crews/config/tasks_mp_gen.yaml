@@ -1,0 +1,134 @@
+# ============================================================================
+# 公众号文章生成项目 Task（task_mp_gen_ 前缀）
+# ============================================================================
+
+task_mp_gen_topic_research:
+  agent: mp_gen_topic_planner
+  context: []
+  description: |
+    你需要围绕用户的选题与创作诉求，对一个关键要点（或整体选题）做深入的选题调研与素材扩展：
+    1）用户的选题 / 主题 topic（字符串）：
+       {topic}
+    2）用户的补充创作诉求 writing_intent（字符串，可能为空）：
+       {writing_intent}
+    3）本次要调研的关键要点信息 point_info（是一个字典，包含 point_id、point），
+       JSON 形式展示如下（请仔细阅读并据此调研）：
+       {point_info}
+    请围绕该要点，输出可支撑创作的核心论点、分论据、读者痛点、素材建议与钩子方向，
+    并按照 MpTopicResearch 的字段要求输出结构化结果。
+    注意：不要编造可被核实为虚假的具体数据、人名或出处，素材以「方向/思路」为主。
+
+    **强调输出格式：**
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+    - 对于没有内容的字段，可以用合理的中文描述（如 "暂无"），不要用形如 `"" ""` 的错误写法
+    - 尽量对每个字段给出充实、有信息量的中文描述
+  expected_output: |
+    一个能够被解析为 MpTopicResearch 的结构化输出。
+    特别重要（避免解析失败）：
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+
+task_mp_gen_research_summary:
+  agent: mp_gen_topic_planner
+  description: |
+    你将获得所有关键要点的选题调研结果，你需要总结整体选题调研，
+    并生成一句话的整体选题调研总结，不要超过 50 个字。
+  expected_output: |
+    不输出多余内容，只输出一个一句话的整体选题调研总结。
+
+task_mp_gen_strategy:
+  agent: mp_gen_strategy_expert
+  context: []
+  description: |
+    你将基于用户创作诉求与选题调研报告，输出一份可直接指导创作的内容策略简报。
+
+    1）用户的选题 / 主题 topic（字符串）：
+       {topic}
+
+    2）用户的补充创作诉求 writing_intent（字符串，可能为空）：
+       {writing_intent}
+
+    3）期望的目标读者 target_audience（字符串，可能为空）：
+       {target_audience}
+
+    4）期望的目标文风 target_style（字符串，可能为空）：
+       {target_style}
+
+    5）文章字数要求 word_count_requirement（字符串，可能为空）：
+       {word_count_requirement}
+
+    6）选题调研报告 research_report（JSON格式）：
+       {research_report}
+
+    请仔细阅读上述信息，基于用户诉求与选题调研结果，制定符合公众号传播逻辑的内容策略简报。
+    特别重要：
+    - 必须严格基于用户提供的选题诉求和选题调研结果，不得自行编造或使用示例数据。
+    - 所有策略建议必须与用户诉求和选题内容高度相关。
+    - 明确切入角度、目标读者、核心价值、标题方向、结构大纲、开头钩子与语气基调。
+    - 结构大纲需与 word_count_requirement 匹配：为每个大纲分段合理分配预估篇幅，避免出现「字数目标 3000 字但只给 4 个短小分段」这类结构失衡。
+    - 使用 IntermediateTool 工具保存中间思考过程。
+
+    **强调输出格式：**
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+  expected_output: |
+    一个完整的 MpGenerateStrategyBrief 结构化输出。
+    特别重要（避免解析失败）：
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+
+task_mp_gen_writing:
+  agent: mp_gen_writer
+  context:
+  - task_mp_gen_strategy
+  description: |
+    你将基于内容策略简报与选题调研，从零创作一篇全新的、读者愿意读完与转发的原创公众号文章。
+
+    1）用户的选题 / 主题 topic（字符串）：
+       {topic}
+
+    2）用户的补充创作诉求 writing_intent（字符串，可能为空）：
+       {writing_intent}
+
+    3）期望的目标文风 target_style（字符串，可能为空）：
+       {target_style}
+
+    4）文章字数要求 word_count_requirement（字符串，可能为空）：
+       {word_count_requirement}
+
+    5）选题调研报告 research_report（JSON格式）：
+       {research_report}
+
+    请严格依据策略简报的角度、结构与语气进行创作，不要编造可被核实为虚假的具体数据、人名或出处。
+    输出创作的标题、完整正文（保留分段）、摘要 / 导语，以及文中关键段落 / 金句列表。
+    使用 IntermediateTool 工具保存中间思考过程。
+
+    **字数硬约束（重要）：**
+    - 必须严格按照 word_count_requirement 控制正文 content 字段的字数（以中文字符计，含标点，不含空白与Markdown符号）。
+    - 若 word_count_requirement 给出区间（如「1500–2000 字」），最终正文字数必须落在区间内，允许 ±5% 的浮动。
+    - 若给出「不少于 N 字」/「至少 N 字」，则正文字数不得低于 N；若给出「不超过 N 字」/「N 字以内」，则不得高于 N。
+    - 若 word_count_requirement 为空或为「（未指定…）」等占位描述，则默认控制在 1500–2500 字之间。
+    - 输出前请自行估算一次字数；若发现偏离要求，务必扩写或精简后再输出。
+
+    **强调输出格式：**
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+  expected_output: |
+    一个完整的 MpGeneratedArticle 结构化输出，包含标题、正文、摘要与关键段落。
+    特别重要（避免解析失败）：
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+
+task_mp_gen_optimization:
+  agent: mp_gen_optimizer
+  context:
+  - task_mp_gen_strategy
+  - task_mp_gen_writing
+  description: |
+    你将基于内容策略简报与创作完成的文章，对标题、正文排版、关键词与合规进行优化，
+    在不损害阅读体验与事实准确性的前提下，最大化打开率、完读率与传播效率。
+    请给出优化说明、优化后的主标题、3-5 个 A/B 备选标题、含排版建议标记的优化正文、
+    排版建议列表、关键词 / 话题标签，以及合规与风险提示。
+    使用 IntermediateTool 工具保存中间思考过程。
+
+    **强调输出格式：**
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
+  expected_output: |
+    一个完整的 MpGenOptimizedArticle 结构化输出。
+    特别重要（避免解析失败）：
+    - 当输出Final Answer时，Final Answer:后面必须是纯JSON，不要使用 ```json 或 ``` 或 ` 代码块标记，不要有任何包装
